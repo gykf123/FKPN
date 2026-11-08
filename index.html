@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>方块跑酷</title>
+  <style>
+    :root {
+      --bg-blue: #44c8f5;
+      --white: #ffffff;
+      --gray: #666666;
+      --dark: #1f1f1f;
+      --about-bg: #9f6a6a;
+      --settings-bg: #646464;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+      background: var(--bg-blue);
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #game {
+      position: relative;
+      width: 1000px;
+      height: 600px;
+      background: var(--bg-blue);
+      color: var(--white);
+      overflow: hidden;
+    }
+
+    .screen {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      inset: 0;
+      display: none;
+      padding: 20px;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    #menu-screen {
+      background: var(--bg-blue);
+    }
+
+    #game-screen {
+      background: #000000;
+    }
+
+    #settings-screen {
+      background: var(--settings-bg);
+    }
+
+    #about-screen {
+      background: var(--about-bg);
+    }
+
+    .title {
+      position: absolute;
+      left: 50%;
+      top: 25%;
+      transform: translate(-50%, -50%);
+      font-size: 80px;
+      font-weight: bold;
+      white-space: nowrap;
+      letter-spacing: 2px;
+    }
+
+    .menu-item {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 40px;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .menu-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateX(-50%) scale(1.03);
+    }
+
+    .level-info {
+      position: absolute;
+      left: 20px;
+      top: 20px;
+      font-size: 20px;
+      font-weight: 500;
+    }
+
+    .center-text {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 40px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .panel {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 70%;
+      max-width: 600px;
+      padding: 30px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.12);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      font-size: 24px;
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+  <div id="game">
+    <div id="menu-screen" class="screen active">
+      <div id="levelInfo" class="level-info">当前关卡: 1</div>
+      <div class="title">方块跑酷</div>
+      <div class="menu-item" data-screen="game" style="top: 52%;">开始游戏</div>
+      <div class="menu-item" data-screen="settings" style="top: 62%;">设置</div>
+      <div class="menu-item" data-screen="about" style="top: 72%;">关于</div>
+    </div>
+
+    <div id="game-screen" class="screen">
+      <div class="center-text">游戏进行中... (按ESC返回)</div>
+    </div>
+
+    <div id="settings-screen" class="screen">
+      <div class="panel">
+        <h2>设置</h2>
+        <p>这里可以放音乐、音效、难度等设置内容。</p>
+        <p>当前难度：第 <span id="levelValue">1</span> 关</p>
+      </div>
+    </div>
+
+    <div id="about-screen" class="screen">
+      <div class="panel">
+        <h2>关于</h2>
+        <p>这是一个基于 Python Pygame 菜单界面的网页移植版本。</p>
+        <p>版本：v0.1</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const now_version = 0.1;
+    let now_screen = 'menu';
+    let level = 1;
+
+    const screenMap = {
+      menu: document.getElementById('menu-screen'),
+      game: document.getElementById('game-screen'),
+      settings: document.getElementById('settings-screen'),
+      about: document.getElementById('about-screen')
+    };
+
+    const levelInfo = document.getElementById('levelInfo');
+    const levelValue = document.getElementById('levelValue');
+
+    function log(message) {
+      const stamp = new Date().toLocaleString('zh-CN', { hour12: false });
+      console.log(`${stamp} - ${message}`);
+      try {
+        const prev = JSON.parse(localStorage.getItem('fkpn_log') || '[]');
+        prev.push(`${stamp} - ${message}`);
+        localStorage.setItem('fkpn_log', JSON.stringify(prev.slice(-200)));
+      } catch (error) {
+        console.warn('日志保存失败:', error);
+      }
+    }
+
+    function getin_data() {
+      try {
+        const saved = localStorage.getItem('fkpn_level');
+        if (saved !== null && saved !== '') {
+          const parsed = Number(saved);
+          if (!Number.isNaN(parsed)) {
+            level = parsed;
+          }
+        }
+        log(`Data retrieved successfully: level = ${level}`);
+      } catch (error) {
+        log(`读取数据失败: ${error.message}`);
+      }
+      renderLevel();
+    }
+
+    function save_data() {
+      localStorage.setItem('fkpn_level', String(level));
+      log(`Data saved successfully: level = ${level}`);
+    }
+
+    function renderLevel() {
+      const display = Math.floor(level);
+      levelInfo.textContent = `当前关卡: ${display}`;
+      levelValue.textContent = display;
+    }
+
+    function showScreen(name) {
+      now_screen = name;
+      Object.entries(screenMap).forEach(([key, el]) => {
+        el.classList.toggle('active', key === name);
+      });
+    }
+
+    function handleMenuClick(event) {
+      const item = event.target.closest('.menu-item');
+      if (!item) return;
+
+      const target = item.dataset.screen;
+      if (target === 'game') {
+        showScreen('game');
+        log('Game started.');
+      } else if (target === 'settings') {
+        showScreen('settings');
+        log('Settings opened.');
+      } else if (target === 'about') {
+        showScreen('about');
+        log('About opened.');
+      }
+    }
+
+    document.addEventListener('click', handleMenuClick);
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && now_screen !== 'menu') {
+        showScreen('menu');
+      }
+    });
+
+    window.addEventListener('beforeunload', save_data);
+
+    log('Trying to get data from data.txt');
+    getin_data();
+    log('Data retrieved successfully.');
+    log('Welcome to the game! Current level: ' + level);
+    showScreen('menu');
+  </script>
+</body>
+</html>
