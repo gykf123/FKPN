@@ -1,13 +1,35 @@
 import pygame
 import time
 import random
+import pickle
+import easygui
 
 pygame.init()
 
+clock = pygame.time.Clock()
 running = True
 now_version = 0.1
 now_screen = 0 # 0: 主菜单 1: 游戏 2: 设置 3: 关于
 level = 1
+map = [0,[],[0,0,0],[0,0],[],[]] 
+# map[关卡编号（0），
+# [出生点x,出生点y]（1），
+# [背景颜色RGB]（2），
+# [终点x,终点y]（3），
+# [
+# [障碍物1起始x,障碍物1起始y,障碍物1终点x,障碍物1终点y]，其他障碍物
+# ]（4）
+# [
+# [陷阱1起始x,陷阱1起始y,陷阱1终点x,陷阱1终点y]，其他陷阱]
+# ]（5）
+#
+# ]
+# """
+playerx = 0
+playery = 0
+
+
+
 
 # 修复了缩进问题，放在全局
 font_path = "C:/Windows/Fonts/msyh.ttc" # 确保这个路径在你的电脑上存在
@@ -17,11 +39,26 @@ font_small = pygame.font.Font(font_path, 20)
 
 # 声明为全局变量，以便主循环能获取按钮的坐标进行点击判定
 menu_rects = {} 
+# 玩家的真实坐标和物理属性（使用 pygame.Rect 方便做碰撞检测）
+player_rect = pygame.Rect(0, 0, 20, 20) 
+player_speed_y = 0
 
 def log(message):
     with open("log.txt", "a", encoding="utf-8") as f:
         f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {message}\n")
     print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {message}")
+
+def load_map(l):
+    global map
+    mapname = f"map{l}.pkl"
+    try:
+        with open(mapname, "rb") as f:
+            map = pickle.load(f)
+        log("Map loaded successfully.")
+    except FileNotFoundError:
+        log(f"{mapname} not found.")
+        return 1
+    
 
 def getin_data():
     global level
@@ -109,10 +146,104 @@ def main_menu():
     info_surf = font_small.render(f"当前关卡: {int(level)}", True, WHITE)
     screen.blit(info_surf, (20, 20))
 # ---------------- 其他界面的占位函数 (防止点击后黑屏无反应) ----------------
+# 全局变量区加一个记录跳跃状态的变量（放在 menu_rects = {} 下面）
+player_speed_y = 0
+is_on_ground = False
+
+def player_jump():
+    global player_speed_y, is_on_ground
+    # 只有在踩在地面上时才能跳
+    if is_on_ground:
+        player_speed_y = -16  # 跳跃高度
+        is_on_ground = False
+
 def game_screen():
-    screen.fill((0, 0, 0)) # 游戏背景
-    text = font_menu.render("游戏进行中... (按ESC返回)", True, (255, 255, 255))
-    screen.blit(text, text.get_rect(center=(screen.get_width()//2, screen.get_height()//2)))
+    global level, screen, now_screen, running, map, player_rect, player_speed_y, is_on_ground
+    
+    # 1. 关卡加载与初始化
+    if level != map[0]:
+        lm_rt = load_map(int(level))
+        if lm_rt == 1:
+            now_screen = 0
+            return
+        # 初始化出生点
+        player_rect.x = map[1][0]
+        player_rect.y = map[1][1]
+        player_speed_y = 0 
+
+    # 2. 绘制背景
+    backcolor = map[2]
+    screen.fill((backcolor[0], backcolor[1], backcolor[2])) 
+    
+    # 3. 物理运动逻辑（左右移动 + 边界限制）
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_a] or keys[pygame.K_LEFT]: 
+        player_rect.x -= 5
+    if keys[pygame.K_d] or keys[pygame.K_RIGHT]: 
+        player_rect.x += 5
+        
+    # 【核心修复】强行限制 X 坐标，绝对不允许跑出屏幕左右边界
+    if player_rect.left < 0: player_rect.left = 0
+    if player_rect.right > 1000: player_rect.right = 1000
+
+    # 重力计算
+    player_speed_y += 1
+    if player_speed_y > 15: player_speed_y = 15
+    if keys[pygame.K_s]: player_speed_y += 2  # 按S加速下落
+    player_rect.y += player_speed_y
+
+    # 4. 绘制地图元素并进行碰撞检测
+    is_on_ground = False  # 每帧先重置落地状态
+
+    # 画终点 (绿色)
+    goal_rect = pygame.Rect(map[3][0], map[3][1], 20, 40)
+    pygame.draw.rect(screen, (0, 255, 0), goal_rect)
+    
+    # 画障碍物 (黑色)
+    for obs in map[4]:
+        obs_rect = pygame.Rect(obs[0], obs[1], obs[2]-obs[0], obs[3]-obs[1])
+        pygame.draw.rect(screen, (0, 0, 0), obs_rect)
+        
+        if player_rect.colliderect(obs_rect):
+            # 如果正在下落（速度为正值）且碰到了方块顶部
+            if player_speed_y > 0 and player_rect.bottom - player_speed_y <= obs_rect.top + 5:
+                player_rect.bottom = obs_rect.top
+                player_speed_y = 0
+                is_on_ground = True
+                
+    # 画陷阱 (红色)
+    for trap in map[5]:
+        trap_rect = pygame.Rect(trap[0], trap[1], trap[2]-trap[0], trap[3]-trap[1])
+        pygame.draw.rect(screen, (255, 0, 0), trap_rect)
+        
+        if player_rect.colliderect(trap_rect):
+            # 碰到陷阱回出生点
+            player_rect.x = map[1][0] 
+            player_rect.y = map[1][1]
+            player_speed_y = 0
+
+    # 5. 绘制玩家 (蓝色)
+    pygame.draw.rect(screen, (0, 0, 255), player_rect)
+
+    # 6. 掉出世界底部的死亡检测
+    if player_rect.top > 600:
+        player_rect.x = map[1][0]
+        player_rect.y = map[1][1]
+        player_speed_y = 0
+
+    # 7. 胜利检测
+    if player_rect.colliderect(goal_rect):
+        level += 1
+        save_data()
+        map[0] = -1 # 下一帧自动加载新地图
+    
+    # 8. 绘制 UI 文字
+    texts = [
+        ((500,20), font_small.render("游戏进行中... (按ESC返回)", True, (255, 255, 255))),
+        ((100,20), font_small.render(f"当前关卡: {int(level)}", True, (255, 255, 255)))
+    ]
+    for xy, ttext in texts:
+        screen.blit(ttext, ttext.get_rect(center=xy))
 
 # ---------------- 游戏入口 ----------------
 log("Trying to get data from data.txt")
@@ -144,10 +275,14 @@ while running:
                     now_screen = 3
                     log("About opened.")
         
-        # 键盘事件处理 (按ESC返回菜单)
+                # 键盘事件处理
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE and now_screen != 0:
                 now_screen = 0
+            # 【新增】如果在游戏界面，按 W/空格/↑ 触发跳跃
+            elif now_screen == 1:
+                if event.key in (pygame.K_SPACE, pygame.K_w, pygame.K_UP):
+                    player_jump()
 
     # 根据状态渲染不同的界面
     if now_screen == 0:
@@ -161,5 +296,6 @@ while running:
     
     # 主循环中统一刷新屏幕
     pygame.display.flip()
+    clock.tick(60) 
 
 pygame.quit()
