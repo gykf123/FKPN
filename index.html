@@ -2,7 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>方块跑酷 Web版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>方块跑酷 Web版 - 支持虚拟按键</title>
     <style>
         body {
             margin: 0;
@@ -14,16 +15,111 @@
             height: 100vh;
             overflow: hidden;
             font-family: "Microsoft YaHei", sans-serif;
+            touch-action: none; /* 防止手机浏览器滑动/缩放 */
+            user-select: none;
+            -webkit-user-select: none;
         }
+
+        /* 游戏外层容器，按比例缩放适配屏幕 */
+        #game-container {
+            position: relative;
+            width: 1000px;
+            height: 600px;
+            transform-origin: center center;
+        }
+
         canvas {
             background-color: #fff;
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
             border-radius: 8px;
+            display: block;
+        }
+
+        /* 虚拟按键面板 */
+        #controls {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* 让点击穿透到 Canvas，除了按钮本身 */
+        }
+
+        .btn-group {
+            position: absolute;
+            bottom: 30px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-group.left {
+            left: 30px;
+        }
+
+        .btn-group.right {
+            right: 30px;
+        }
+
+        .v-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.6);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto; /* 开启按钮的点击响应 */
+            touch-action: none;
+            transition: background-color 0.1s, transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
+
+        /* 按下状态 */
+        .v-btn:active, .v-btn.pressed {
+            background-color: rgba(255, 215, 0, 0.8);
+            border-color: white;
+            transform: scale(0.9);
+        }
+
+        /* 针对小屏幕进行等比缩放 */
+        @media (max-width: 1050px), (max-height: 650px) {
+            #game-container {
+                transform: scale(0.8);
+            }
+        }
+        @media (max-width: 800px), (max-height: 500px) {
+            #game-container {
+                transform: scale(0.6);
+            }
+        }
+        @media (max-width: 600px), (max-height: 400px) {
+            #game-container {
+                transform: scale(0.4);
+            }
         }
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="1000" height="600"></canvas>
+    <div id="game-container">
+        <canvas id="gameCanvas" width="1000" height="600"></canvas>
+        
+        <!-- 虚拟按键层 -->
+        <div id="controls">
+            <div class="btn-group left">
+                <div class="v-btn" id="btn-left" data-key="a">◀</div>
+                <div class="v-btn" id="btn-right" data-key="d">▶</div>
+            </div>
+            <div class="btn-group right">
+                <div class="v-btn" id="btn-down" data-key="s">降</div>
+                <div class="v-btn" id="btn-jump" data-key="space">跳</div>
+            </div>
+        </div>
+    </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -48,62 +144,55 @@
         const fontMenu = "bold 40px 'Microsoft YaHei', sans-serif";
         const fontSmall = "20px 'Microsoft YaHei', sans-serif";
 
-        // ==========================================
-        // 关卡数据 (从你的 buildmap.py 移植而来)
-        // 格式: [关卡号, [出生x, 出生y], [R,G,B], [终点x, 终点y], [[地面/障碍物]], [[陷阱]]]
-        // ==========================================
+        // 关卡数据 (与前文相同)
         const maps = [
-            // 关卡 1
             [1, [50, 500], [100, 180, 255], [900, 510], [[0, 550, 1000, 600]], []],
-            // 关卡 2
             [2, [50, 450], [50, 150, 100], [900, 510], [[0, 500, 300, 600], [420, 480, 650, 600], [750, 550, 1000, 600]], [[300, 550, 420, 600], [650, 550, 750, 600], [500, 450, 550, 480]]],
-            // 关卡 3
             [3, [50, 500], [200, 150, 100], [850, 280], [[0, 550, 200, 600], [250, 500, 350, 600], [400, 440, 500, 600], [550, 380, 650, 600], [700, 320, 1000, 600]], [[200, 550, 250, 600], [350, 550, 400, 600], [500, 550, 550, 600], [650, 550, 700, 600]]],
-            // 关卡 4
             [4, [50, 500], [100, 100, 150], [850, 230], [[0, 550, 120, 600], [160, 480, 280, 520], [320, 410, 440, 450], [480, 340, 600, 380], [640, 270, 1000, 310]], [[0, 570, 1000, 600]]],
-            // 关卡 5
             [5, [50, 500], [180, 100, 120], [900, 510], [[0, 550, 1000, 600]], [[200, 530, 250, 550], [350, 530, 450, 550], [550, 530, 600, 550], [700, 530, 800, 550]]],
-            // 关卡 6 (修复版)
             [6, [50, 500], [80, 150, 80], [900, 510], [[0, 550, 350, 600], [450, 500, 550, 600], [650, 550, 1000, 600]], [[350, 550, 450, 600], [550, 550, 650, 600]]],
-            // 关卡 7
             [7, [50, 500], [150, 150, 80], [900, 460], [[0, 550, 200, 600], [280, 450, 450, 500], [530, 350, 700, 400], [780, 500, 1000, 600]], [[200, 550, 280, 600], [450, 550, 530, 600], [700, 550, 780, 600]]],
-            // 关卡 8
             [8, [50, 500], [100, 80, 150], [900, 510], [[0, 550, 250, 600], [350, 450, 600, 500], [700, 550, 1000, 600], [300, 300, 650, 320]], [[250, 550, 350, 600], [600, 550, 700, 600]]],
-            // 关卡 9
             [9, [50, 500], [150, 80, 80], [900, 510], [[0, 550, 150, 600], [250, 500, 300, 520], [400, 450, 450, 470], [550, 400, 600, 420], [700, 450, 750, 470], [850, 550, 1000, 600]], [[0, 570, 1000, 600]]],
-            // 关卡 10
             [10, [50, 500], [60, 60, 100], [900, 300], [[0, 550, 150, 600], [250, 500, 400, 600], [500, 420, 650, 600], [750, 340, 1000, 600]], [[300, 480, 350, 500], [550, 400, 600, 420], [650, 550, 750, 600]]]
         ];
 
         let currentMap = maps[level - 1] || maps[0];
 
         // ==========================================
-        // 输入控制
+        // 统一的跳跃函数
         // ==========================================
-        window.addEventListener('keydown', (e) => {
-            keys[e.key.toLowerCase()] = true;
-            keys[e.code] = true;
-            
-            // 阻止空格和方向键滚动页面
-            if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
-                e.preventDefault();
-            }
-
-            // 游戏内跳跃
-            if (currentState === PLAYING && (e.code === 'Space' || e.key.toLowerCase() === 'w' || e.code === 'ArrowUp')) {
+        function doJump() {
+            if (currentState === PLAYING) {
                 if (isOnGround || coyoteTimer > 0) {
                     player.vy = -17;
                     isOnGround = false;
                     coyoteTimer = 0;
                 }
             }
+        }
 
-            // 返回菜单
+        // ==========================================
+        // 键盘与鼠标输入 (物理键盘)
+        // ==========================================
+        window.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            keys[e.code] = true;
+            
+            if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+                e.preventDefault();
+            }
+
+            // 键盘跳跃
+            if (e.code === 'Space' || e.key.toLowerCase() === 'w' || e.code === 'ArrowUp') {
+                doJump();
+            }
+
             if (e.code === 'Escape' && currentState === PLAYING) {
                 currentState = MENU;
             }
 
-            // 菜单按 R 重置进度
             if (currentState === MENU && e.key.toLowerCase() === 'r') {
                 level = 1;
                 localStorage.setItem('fkpn_level', level);
@@ -116,14 +205,55 @@
             keys[e.code] = false;
         });
 
-        canvas.addEventListener('mousemove', (e) => {
+        canvas.addEventListener('pointermove', (e) => {
             const rect = canvas.getBoundingClientRect();
-            mouse.x = e.clientX - rect.left;
-            mouse.y = e.clientY - rect.top;
+            // 需要考虑 CSS 缩放带来的坐标偏差
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            mouse.x = (e.clientX - rect.left) * scaleX;
+            mouse.y = (e.clientY - rect.top) * scaleY;
         });
 
-        canvas.addEventListener('mousedown', () => { mouse.isDown = true; });
-        canvas.addEventListener('mouseup', () => { mouse.isDown = false; });
+        canvas.addEventListener('pointerdown', (e) => { 
+            mouse.isDown = true; 
+            if(e.pointerType === 'touch') e.preventDefault(); // 阻止手机长按弹出菜单
+        });
+        canvas.addEventListener('pointerup', () => { mouse.isDown = false; });
+        canvas.addEventListener('pointercancel', () => { mouse.isDown = false; });
+
+        // ==========================================
+        // 虚拟按键输入控制
+        // ==========================================
+        function bindVirtualButton(id, keyName, isJumpAction = false) {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+
+            // 按下
+            btn.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                btn.classList.add('pressed');
+                keys[keyName] = true;
+                if (isJumpAction) doJump();
+            });
+
+            // 松开 (包括指针移出按钮)
+            const release = (e) => {
+                e.preventDefault();
+                btn.classList.remove('pressed');
+                keys[keyName] = false;
+            };
+            btn.addEventListener('pointerup', release);
+            btn.addEventListener('pointerleave', release);
+            btn.addEventListener('pointercancel', release);
+        }
+
+        // 绑定左右移动和加速下落按键
+        bindVirtualButton('btn-left', 'a');
+        bindVirtualButton('btn-right', 'd');
+        bindVirtualButton('btn-down', 's');
+        // 绑定跳跃按键（触发 doJump 函数）
+        bindVirtualButton('btn-jump', 'space', true);
+
 
         // ==========================================
         // 碰撞检测工具函数
@@ -139,6 +269,9 @@
             canvas.width = 1000;
             ctx.fillStyle = 'rgb(68, 200, 249)';
             ctx.fillRect(0, 0, 1000, 600);
+
+            // 隐藏游戏中的虚拟按键
+            document.getElementById('controls').style.display = 'none';
 
             // 标题
             ctx.fillStyle = 'white';
@@ -168,27 +301,22 @@
                     btnColor = 'rgb(255, 215, 0)';
                 }
 
-                // 圆角矩形
                 ctx.fillStyle = btnColor;
                 ctx.beginPath();
                 ctx.roundRect(x, y - h/2, w, h, 35);
                 ctx.fill();
 
-                // 文字
                 ctx.fillStyle = 'rgb(60, 60, 60)';
                 ctx.fillText(text, 500, y);
 
-                // 记录点击区域
                 menuRects[text] = { x: x, y: y - h/2, w: w, h: h };
             });
 
-            // 左上角信息
             ctx.font = fontSmall;
             ctx.textAlign = 'left';
             ctx.fillStyle = 'white';
             ctx.fillText(`当前关卡: ${level} (按 R 重置进度)`, 20, 30);
 
-            // 鼠标点击菜单判定
             if (mouse.isDown) {
                 for (let text in menuRects) {
                     const r = menuRects[text];
@@ -197,7 +325,7 @@
                             currentState = PLAYING;
                             initLevel();
                         }
-                        mouse.isDown = false; // 防止连发
+                        mouse.isDown = false; 
                     }
                 }
             }
@@ -225,6 +353,9 @@
         // 游戏主循环逻辑与渲染
         // ==========================================
         function drawGame() {
+            // 显示虚拟按键
+            document.getElementById('controls').style.display = 'block';
+
             const bg = currentMap[2];
             ctx.fillStyle = `rgb(${bg[0]}, ${bg[1]}, ${bg[2]})`;
             ctx.fillRect(0, 0, 1000, 600);
@@ -247,14 +378,12 @@
             const playerRect = { x: player.x, y: player.y, w: player.w, h: player.h };
             const prevY = player.y - player.vy;
 
-            // 绘制地面/平台，并做落地判定
             ctx.fillStyle = 'black';
             for (let g of currentMap[4]) {
                 const gRect = { x: g[0], y: g[1], w: g[2] - g[0], h: g[3] - g[1] };
                 ctx.fillRect(gRect.x, gRect.y, gRect.w, gRect.h);
 
                 if (checkCollide(playerRect, gRect)) {
-                    // 如果正在下落且碰到了顶部
                     if (player.vy > 0 && prevY + player.h <= gRect.y + 5) {
                         player.y = gRect.y - player.h;
                         player.vy = 0;
@@ -263,17 +392,14 @@
                 }
             }
 
-            // 土狼时间计算
             if (isOnGround) coyoteTimer = 8;
             else if (coyoteTimer > 0) coyoteTimer--;
 
-            // 绘制陷阱/岩浆，做死亡判定
             ctx.fillStyle = 'red';
             for (let t of currentMap[5]) {
                 const tRect = { x: t[0], y: t[1], w: t[2] - t[0], h: t[3] - t[1] };
                 ctx.fillRect(tRect.x, tRect.y, tRect.w, tRect.h);
 
-                // 扩大 4 像素的陷阱判定 (inflate)
                 const infRect = { x: tRect.x - 2, y: tRect.y - 2, w: tRect.w + 4, h: tRect.h + 4 };
                 if (checkCollide(playerRect, infRect)) {
                     player.x = currentMap[1][0];
@@ -282,18 +408,15 @@
                 }
             }
 
-            // 掉出屏幕死亡判定
             if (player.y > 600) {
                 player.x = currentMap[1][0];
                 player.y = currentMap[1][1];
                 player.vy = 0;
             }
 
-            // 绘制玩家
             ctx.fillStyle = 'blue';
             ctx.fillRect(player.x, player.y, player.w, player.h);
 
-            // 绘制终点并做胜利判定
             const goalPos = currentMap[3];
             const goalRect = { x: goalPos[0], y: goalPos[1], w: 20, h: 40 };
             ctx.fillStyle = 'rgb(0, 255, 0)';
@@ -305,7 +428,6 @@
                 initLevel();
             }
 
-            // 绘制 UI
             ctx.fillStyle = 'white';
             ctx.font = fontSmall;
             ctx.textAlign = 'left';
