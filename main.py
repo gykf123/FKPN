@@ -3,6 +3,10 @@ import time
 import random
 import pickle
 import easygui
+import os
+
+# 将当前工作目录强制切换为该文件所在的目录
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 pygame.init()
 
