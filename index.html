@@ -1,261 +1,331 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>方块跑酷</title>
-  <style>
-    :root {
-      --bg-blue: #44c8f5;
-      --white: #ffffff;
-      --gray: #666666;
-      --dark: #1f1f1f;
-      --about-bg: #9f6a6a;
-      --settings-bg: #646464;
-    }
-
-    * { box-sizing: border-box; }
-
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
-      background: var(--bg-blue);
-      overflow: hidden;
-    }
-
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    #game {
-      position: relative;
-      width: 1000px;
-      height: 600px;
-      background: var(--bg-blue);
-      color: var(--white);
-      overflow: hidden;
-    }
-
-    .screen {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      inset: 0;
-      display: none;
-      padding: 20px;
-    }
-
-    .screen.active {
-      display: block;
-    }
-
-    #menu-screen {
-      background: var(--bg-blue);
-    }
-
-    #game-screen {
-      background: #000000;
-    }
-
-    #settings-screen {
-      background: var(--settings-bg);
-    }
-
-    #about-screen {
-      background: var(--about-bg);
-    }
-
-    .title {
-      position: absolute;
-      left: 50%;
-      top: 25%;
-      transform: translate(-50%, -50%);
-      font-size: 80px;
-      font-weight: bold;
-      white-space: nowrap;
-      letter-spacing: 2px;
-    }
-
-    .menu-item {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 40px;
-      font-weight: 600;
-      padding: 10px 20px;
-      border-radius: 10px;
-      cursor: pointer;
-      user-select: none;
-      transition: transform 0.15s ease, background 0.15s ease;
-    }
-
-    .menu-item:hover {
-      background: rgba(255, 255, 255, 0.1);
-      transform: translateX(-50%) scale(1.03);
-    }
-
-    .level-info {
-      position: absolute;
-      left: 20px;
-      top: 20px;
-      font-size: 20px;
-      font-weight: 500;
-    }
-
-    .center-text {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 40px;
-      text-align: center;
-      white-space: nowrap;
-    }
-
-    .panel {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      width: 70%;
-      max-width: 600px;
-      padding: 30px;
-      border-radius: 16px;
-      background: rgba(255,255,255,0.12);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-      font-size: 24px;
-      line-height: 1.8;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>方块跑酷 Web版</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #2c2c2c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        canvas {
+            background-color: #fff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            border-radius: 8px;
+        }
+    </style>
 </head>
 <body>
-  <div id="game">
-    <div id="menu-screen" class="screen active">
-      <div id="levelInfo" class="level-info">当前关卡: 1</div>
-      <div class="title">方块跑酷</div>
-      <div class="menu-item" data-screen="game" style="top: 52%;">开始游戏</div>
-      <div class="menu-item" data-screen="settings" style="top: 62%;">设置</div>
-      <div class="menu-item" data-screen="about" style="top: 72%;">关于</div>
-    </div>
+    <canvas id="gameCanvas" width="1000" height="600"></canvas>
 
-    <div id="game-screen" class="screen">
-      <div class="center-text">游戏进行中... (按ESC返回)</div>
-    </div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 游戏状态常量
+        const MENU = 0;
+        const PLAYING = 1;
+        let currentState = MENU;
 
-    <div id="settings-screen" class="screen">
-      <div class="panel">
-        <h2>设置</h2>
-        <p>这里可以放音乐、音效、难度等设置内容。</p>
-        <p>当前难度：第 <span id="levelValue">1</span> 关</p>
-      </div>
-    </div>
+        // 物理与全局变量
+        let level = parseInt(localStorage.getItem('fkpn_level')) || 1;
+        let player = { x: 0, y: 0, w: 20, h: 20, vy: 0, speed: 6 };
+        let isOnGround = false;
+        let coyoteTimer = 0;
+        let keys = {};
+        let mouse = { x: 0, y: 0, isDown: false };
+        let menuRects = {};
 
-    <div id="about-screen" class="screen">
-      <div class="panel">
-        <h2>关于</h2>
-        <p>这是一个基于 Python Pygame 菜单界面的网页移植版本。</p>
-        <p>版本：v0.1</p>
-      </div>
-    </div>
-  </div>
+        // 字体设置
+        const fontTitle = "bold 80px 'Microsoft YaHei', sans-serif";
+        const fontMenu = "bold 40px 'Microsoft YaHei', sans-serif";
+        const fontSmall = "20px 'Microsoft YaHei', sans-serif";
 
-  <script>
-    const now_version = 0.1;
-    let now_screen = 'menu';
-    let level = 1;
+        // ==========================================
+        // 关卡数据 (从你的 buildmap.py 移植而来)
+        // 格式: [关卡号, [出生x, 出生y], [R,G,B], [终点x, 终点y], [[地面/障碍物]], [[陷阱]]]
+        // ==========================================
+        const maps = [
+            // 关卡 1
+            [1, [50, 500], [100, 180, 255], [900, 510], [[0, 550, 1000, 600]], []],
+            // 关卡 2
+            [2, [50, 450], [50, 150, 100], [900, 510], [[0, 500, 300, 600], [420, 480, 650, 600], [750, 550, 1000, 600]], [[300, 550, 420, 600], [650, 550, 750, 600], [500, 450, 550, 480]]],
+            // 关卡 3
+            [3, [50, 500], [200, 150, 100], [850, 280], [[0, 550, 200, 600], [250, 500, 350, 600], [400, 440, 500, 600], [550, 380, 650, 600], [700, 320, 1000, 600]], [[200, 550, 250, 600], [350, 550, 400, 600], [500, 550, 550, 600], [650, 550, 700, 600]]],
+            // 关卡 4
+            [4, [50, 500], [100, 100, 150], [850, 230], [[0, 550, 120, 600], [160, 480, 280, 520], [320, 410, 440, 450], [480, 340, 600, 380], [640, 270, 1000, 310]], [[0, 570, 1000, 600]]],
+            // 关卡 5
+            [5, [50, 500], [180, 100, 120], [900, 510], [[0, 550, 1000, 600]], [[200, 530, 250, 550], [350, 530, 450, 550], [550, 530, 600, 550], [700, 530, 800, 550]]],
+            // 关卡 6 (修复版)
+            [6, [50, 500], [80, 150, 80], [900, 510], [[0, 550, 350, 600], [450, 500, 550, 600], [650, 550, 1000, 600]], [[350, 550, 450, 600], [550, 550, 650, 600]]],
+            // 关卡 7
+            [7, [50, 500], [150, 150, 80], [900, 460], [[0, 550, 200, 600], [280, 450, 450, 500], [530, 350, 700, 400], [780, 500, 1000, 600]], [[200, 550, 280, 600], [450, 550, 530, 600], [700, 550, 780, 600]]],
+            // 关卡 8
+            [8, [50, 500], [100, 80, 150], [900, 510], [[0, 550, 250, 600], [350, 450, 600, 500], [700, 550, 1000, 600], [300, 300, 650, 320]], [[250, 550, 350, 600], [600, 550, 700, 600]]],
+            // 关卡 9
+            [9, [50, 500], [150, 80, 80], [900, 510], [[0, 550, 150, 600], [250, 500, 300, 520], [400, 450, 450, 470], [550, 400, 600, 420], [700, 450, 750, 470], [850, 550, 1000, 600]], [[0, 570, 1000, 600]]],
+            // 关卡 10
+            [10, [50, 500], [60, 60, 100], [900, 300], [[0, 550, 150, 600], [250, 500, 400, 600], [500, 420, 650, 600], [750, 340, 1000, 600]], [[300, 480, 350, 500], [550, 400, 600, 420], [650, 550, 750, 600]]]
+        ];
 
-    const screenMap = {
-      menu: document.getElementById('menu-screen'),
-      game: document.getElementById('game-screen'),
-      settings: document.getElementById('settings-screen'),
-      about: document.getElementById('about-screen')
-    };
+        let currentMap = maps[level - 1] || maps[0];
 
-    const levelInfo = document.getElementById('levelInfo');
-    const levelValue = document.getElementById('levelValue');
+        // ==========================================
+        // 输入控制
+        // ==========================================
+        window.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            keys[e.code] = true;
+            
+            // 阻止空格和方向键滚动页面
+            if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+                e.preventDefault();
+            }
 
-    function log(message) {
-      const stamp = new Date().toLocaleString('zh-CN', { hour12: false });
-      console.log(`${stamp} - ${message}`);
-      try {
-        const prev = JSON.parse(localStorage.getItem('fkpn_log') || '[]');
-        prev.push(`${stamp} - ${message}`);
-        localStorage.setItem('fkpn_log', JSON.stringify(prev.slice(-200)));
-      } catch (error) {
-        console.warn('日志保存失败:', error);
-      }
-    }
+            // 游戏内跳跃
+            if (currentState === PLAYING && (e.code === 'Space' || e.key.toLowerCase() === 'w' || e.code === 'ArrowUp')) {
+                if (isOnGround || coyoteTimer > 0) {
+                    player.vy = -17;
+                    isOnGround = false;
+                    coyoteTimer = 0;
+                }
+            }
 
-    function getin_data() {
-      try {
-        const saved = localStorage.getItem('fkpn_level');
-        if (saved !== null && saved !== '') {
-          const parsed = Number(saved);
-          if (!Number.isNaN(parsed)) {
-            level = parsed;
-          }
+            // 返回菜单
+            if (e.code === 'Escape' && currentState === PLAYING) {
+                currentState = MENU;
+            }
+
+            // 菜单按 R 重置进度
+            if (currentState === MENU && e.key.toLowerCase() === 'r') {
+                level = 1;
+                localStorage.setItem('fkpn_level', level);
+                currentMap = maps[level - 1];
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+            keys[e.code] = false;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = e.clientX - rect.left;
+            mouse.y = e.clientY - rect.top;
+        });
+
+        canvas.addEventListener('mousedown', () => { mouse.isDown = true; });
+        canvas.addEventListener('mouseup', () => { mouse.isDown = false; });
+
+        // ==========================================
+        // 碰撞检测工具函数
+        // ==========================================
+        function checkCollide(r1, r2) {
+            return r1.x < r2.x + r2.w && r1.x + r1.w > r2.x && r1.y < r2.y + r2.h && r1.y + r1.h > r2.y;
         }
-        log(`Data retrieved successfully: level = ${level}`);
-      } catch (error) {
-        log(`读取数据失败: ${error.message}`);
-      }
-      renderLevel();
-    }
 
-    function save_data() {
-      localStorage.setItem('fkpn_level', String(level));
-      log(`Data saved successfully: level = ${level}`);
-    }
+        // ==========================================
+        // 渲染主菜单
+        // ==========================================
+        function drawMenu() {
+            canvas.width = 1000;
+            ctx.fillStyle = 'rgb(68, 200, 249)';
+            ctx.fillRect(0, 0, 1000, 600);
 
-    function renderLevel() {
-      const display = Math.floor(level);
-      levelInfo.textContent = `当前关卡: ${display}`;
-      levelValue.textContent = display;
-    }
+            // 标题
+            ctx.fillStyle = 'white';
+            ctx.font = fontTitle;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText("方块跑酷", 500, 130);
 
-    function showScreen(name) {
-      now_screen = name;
-      Object.entries(screenMap).forEach(([key, el]) => {
-        el.classList.toggle('active', key === name);
-      });
-    }
+            // 菜单项
+            const items = ["开始游戏", "设置", "关于"];
+            const startY = 320;
+            const gap = 100;
+            
+            ctx.font = fontMenu;
+            menuRects = {};
 
-    function handleMenuClick(event) {
-      const item = event.target.closest('.menu-item');
-      if (!item) return;
+            items.forEach((text, i) => {
+                const y = startY + i * gap;
+                const w = 260;
+                const h = 70;
+                const x = 500 - w / 2;
+                
+                let btnColor = 'white';
+                const isHover = mouse.x > x && mouse.x < x + w && mouse.y > y - h/2 && mouse.y < y + h/2;
 
-      const target = item.dataset.screen;
-      if (target === 'game') {
-        showScreen('game');
-        log('Game started.');
-      } else if (target === 'settings') {
-        showScreen('settings');
-        log('Settings opened.');
-      } else if (target === 'about') {
-        showScreen('about');
-        log('About opened.');
-      }
-    }
+                if (isHover) {
+                    btnColor = 'rgb(255, 215, 0)';
+                }
 
-    document.addEventListener('click', handleMenuClick);
+                // 圆角矩形
+                ctx.fillStyle = btnColor;
+                ctx.beginPath();
+                ctx.roundRect(x, y - h/2, w, h, 35);
+                ctx.fill();
 
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && now_screen !== 'menu') {
-        showScreen('menu');
-      }
-    });
+                // 文字
+                ctx.fillStyle = 'rgb(60, 60, 60)';
+                ctx.fillText(text, 500, y);
 
-    window.addEventListener('beforeunload', save_data);
+                // 记录点击区域
+                menuRects[text] = { x: x, y: y - h/2, w: w, h: h };
+            });
 
-    log('Trying to get data from data.txt');
-    getin_data();
-    log('Data retrieved successfully.');
-    log('Welcome to the game! Current level: ' + level);
-    showScreen('menu');
-  </script>
+            // 左上角信息
+            ctx.font = fontSmall;
+            ctx.textAlign = 'left';
+            ctx.fillStyle = 'white';
+            ctx.fillText(`当前关卡: ${level} (按 R 重置进度)`, 20, 30);
+
+            // 鼠标点击菜单判定
+            if (mouse.isDown) {
+                for (let text in menuRects) {
+                    const r = menuRects[text];
+                    if (mouse.x > r.x && mouse.x < r.x + r.w && mouse.y > r.y && mouse.y < r.y + r.h) {
+                        if (text === "开始游戏") {
+                            currentState = PLAYING;
+                            initLevel();
+                        }
+                        mouse.isDown = false; // 防止连发
+                    }
+                }
+            }
+        }
+
+        // ==========================================
+        // 初始化关卡
+        // ==========================================
+        function initLevel() {
+            currentMap = maps[level - 1];
+            if (!currentMap) {
+                alert("恭喜通关所有关卡！按 R 重置进度。");
+                level = 1;
+                localStorage.setItem('fkpn_level', level);
+                currentMap = maps[0];
+                currentState = MENU;
+                return;
+            }
+            player.x = currentMap[1][0];
+            player.y = currentMap[1][1];
+            player.vy = 0;
+        }
+
+        // ==========================================
+        // 游戏主循环逻辑与渲染
+        // ==========================================
+        function drawGame() {
+            const bg = currentMap[2];
+            ctx.fillStyle = `rgb(${bg[0]}, ${bg[1]}, ${bg[2]})`;
+            ctx.fillRect(0, 0, 1000, 600);
+
+            // 1. 水平移动控制
+            if (keys['a'] || keys['arrowleft']) player.x -= player.speed;
+            if (keys['d'] || keys['arrowright']) player.x += player.speed;
+            
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.w > 1000) player.x = 1000 - player.w;
+
+            // 2. 重力
+            player.vy += 1;
+            if (player.vy > 15) player.vy = 15;
+            if (keys['s']) player.vy += 2;
+            player.y += player.vy;
+
+            // 3. 碰撞检测
+            isOnGround = false;
+            const playerRect = { x: player.x, y: player.y, w: player.w, h: player.h };
+            const prevY = player.y - player.vy;
+
+            // 绘制地面/平台，并做落地判定
+            ctx.fillStyle = 'black';
+            for (let g of currentMap[4]) {
+                const gRect = { x: g[0], y: g[1], w: g[2] - g[0], h: g[3] - g[1] };
+                ctx.fillRect(gRect.x, gRect.y, gRect.w, gRect.h);
+
+                if (checkCollide(playerRect, gRect)) {
+                    // 如果正在下落且碰到了顶部
+                    if (player.vy > 0 && prevY + player.h <= gRect.y + 5) {
+                        player.y = gRect.y - player.h;
+                        player.vy = 0;
+                        isOnGround = true;
+                    }
+                }
+            }
+
+            // 土狼时间计算
+            if (isOnGround) coyoteTimer = 8;
+            else if (coyoteTimer > 0) coyoteTimer--;
+
+            // 绘制陷阱/岩浆，做死亡判定
+            ctx.fillStyle = 'red';
+            for (let t of currentMap[5]) {
+                const tRect = { x: t[0], y: t[1], w: t[2] - t[0], h: t[3] - t[1] };
+                ctx.fillRect(tRect.x, tRect.y, tRect.w, tRect.h);
+
+                // 扩大 4 像素的陷阱判定 (inflate)
+                const infRect = { x: tRect.x - 2, y: tRect.y - 2, w: tRect.w + 4, h: tRect.h + 4 };
+                if (checkCollide(playerRect, infRect)) {
+                    player.x = currentMap[1][0];
+                    player.y = currentMap[1][1];
+                    player.vy = 0;
+                }
+            }
+
+            // 掉出屏幕死亡判定
+            if (player.y > 600) {
+                player.x = currentMap[1][0];
+                player.y = currentMap[1][1];
+                player.vy = 0;
+            }
+
+            // 绘制玩家
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(player.x, player.y, player.w, player.h);
+
+            // 绘制终点并做胜利判定
+            const goalPos = currentMap[3];
+            const goalRect = { x: goalPos[0], y: goalPos[1], w: 20, h: 40 };
+            ctx.fillStyle = 'rgb(0, 255, 0)';
+            ctx.fillRect(goalRect.x, goalRect.y, goalRect.w, goalRect.h);
+
+            if (checkCollide(playerRect, goalRect)) {
+                level++;
+                localStorage.setItem('fkpn_level', level);
+                initLevel();
+            }
+
+            // 绘制 UI
+            ctx.fillStyle = 'white';
+            ctx.font = fontSmall;
+            ctx.textAlign = 'left';
+            ctx.fillText(`当前关卡: ${level}`, 20, 30);
+            
+            ctx.textAlign = 'center';
+            ctx.fillText("游戏进行中... (按ESC返回)", 500, 30);
+        }
+
+        // ==========================================
+        // 游戏循环 (锁定 60FPS)
+        // ==========================================
+        setInterval(() => {
+            if (currentState === MENU) {
+                drawMenu();
+            } else if (currentState === PLAYING) {
+                drawGame();
+            }
+        }, 1000 / 60);
+
+    </script>
 </body>
 </html>
