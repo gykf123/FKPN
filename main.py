@@ -45,6 +45,7 @@ def load_map(l):
         log(f"Map {l} loaded successfully.")
     except FileNotFoundError:
         log(f"{mapname} not found.")
+        easygui.msgbox(f"地图文件 {mapname} 不存在，游戏将返回主菜单。", title="错误")
         return 1
     return 0
 

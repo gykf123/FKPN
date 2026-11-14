@@ -6733,3 +6733,192 @@
 2026-11-08 16:59:32 - map11.pkl not found.
 2026-11-08 16:59:35 - Now I'm in save_data()
 2026-11-08 16:59:35 - Data saved successfully: level = 11.0
+2026-11-14 17:40:26 - Trying to get data from data.txt
+2026-11-14 17:40:26 - Now I'm in getin_data()
+2026-11-14 17:40:26 - Data retrieved successfully: level = 11.0
+2026-11-14 17:40:26 - Data retrieved successfully.
+2026-11-14 17:40:26 - Trying to open pygame window...
+2026-11-14 17:40:26 - Pygame window opened successfully.
+2026-11-14 17:40:30 - Now I'm in save_data()
+2026-11-14 17:40:30 - Data saved successfully: level = 1
+2026-11-14 17:40:30 - Progress reset to level 1.
+2026-11-14 17:40:32 - Game started.
+2026-11-14 17:40:32 - Map 1 loaded successfully.
+2026-11-14 17:40:36 - Now I'm in save_data()
+2026-11-14 17:40:36 - Data saved successfully: level = 2
+2026-11-14 17:40:36 - Map 2 loaded successfully.
+2026-11-14 17:40:46 - Now I'm in save_data()
+2026-11-14 17:40:46 - Data saved successfully: level = 3
+2026-11-14 17:40:46 - Map 3 loaded successfully.
+2026-11-14 17:40:55 - Now I'm in save_data()
+2026-11-14 17:40:55 - Data saved successfully: level = 4
+2026-11-14 17:40:55 - Map 4 loaded successfully.
+2026-11-14 17:41:02 - Now I'm in save_data()
+2026-11-14 17:41:02 - Data saved successfully: level = 5
+2026-11-14 17:41:02 - Map 5 loaded successfully.
+2026-11-14 17:41:13 - Now I'm in save_data()
+2026-11-14 17:41:13 - Data saved successfully: level = 6
+2026-11-14 17:41:13 - Map 6 loaded successfully.
+2026-11-14 17:41:18 - Now I'm in save_data()
+2026-11-14 17:41:18 - Data saved successfully: level = 7
+2026-11-14 17:41:18 - Map 7 loaded successfully.
+2026-11-14 17:41:21 - Now I'm in save_data()
+2026-11-14 17:41:21 - Data saved successfully: level = 8
+2026-11-14 17:41:21 - Map 8 loaded successfully.
+2026-11-14 17:41:24 - Now I'm in save_data()
+2026-11-14 17:41:24 - Data saved successfully: level = 9
+2026-11-14 17:41:24 - Map 9 loaded successfully.
+2026-11-14 17:41:33 - Now I'm in save_data()
+2026-11-14 17:41:33 - Data saved successfully: level = 10
+2026-11-14 17:41:33 - Map 10 loaded successfully.
+2026-11-14 17:41:43 - Now I'm in save_data()
+2026-11-14 17:41:43 - Data saved successfully: level = 11
+2026-11-14 17:41:43 - map11.pkl not found.
+2026-11-14 17:41:46 - Now I'm in save_data()
+2026-11-14 17:41:46 - Data saved successfully: level = 11
+2026-11-14 17:42:44 - Trying to get data from data.txt
+2026-11-14 17:42:44 - Now I'm in getin_data()
+2026-11-14 17:42:44 - Data retrieved successfully: level = 11.0
+2026-11-14 17:42:44 - Data retrieved successfully.
+2026-11-14 17:42:44 - Trying to open pygame window...
+2026-11-14 17:42:44 - Pygame window opened successfully.
+2026-11-14 17:42:48 - Game started.
+2026-11-14 17:42:48 - map11.pkl not found.
+2026-11-14 17:42:52 - Game started.
+2026-11-14 17:42:52 - map11.pkl not found.
+2026-11-14 17:42:56 - Now I'm in save_data()
+2026-11-14 17:42:56 - Data saved successfully: level = 1
+2026-11-14 17:42:56 - Progress reset to level 1.
+2026-11-14 17:42:57 - Game started.
+2026-11-14 17:42:57 - Map 1 loaded successfully.
+2026-11-14 17:43:00 - Now I'm in save_data()
+2026-11-14 17:43:00 - Data saved successfully: level = 2
+2026-11-14 17:43:00 - Map 2 loaded successfully.
+2026-11-14 17:43:05 - Now I'm in save_data()
+2026-11-14 17:43:05 - Data saved successfully: level = 3
+2026-11-14 17:43:05 - Map 3 loaded successfully.
+2026-11-14 17:43:11 - Now I'm in save_data()
+2026-11-14 17:43:11 - Data saved successfully: level = 4
+2026-11-14 17:43:11 - Map 4 loaded successfully.
+2026-11-14 17:43:15 - Now I'm in save_data()
+2026-11-14 17:43:15 - Data saved successfully: level = 5
+2026-11-14 17:43:15 - Map 5 loaded successfully.
+2026-11-14 17:43:21 - Now I'm in save_data()
+2026-11-14 17:43:21 - Data saved successfully: level = 6
+2026-11-14 17:43:21 - Map 6 loaded successfully.
+2026-11-14 17:43:25 - Now I'm in save_data()
+2026-11-14 17:43:25 - Data saved successfully: level = 7
+2026-11-14 17:43:25 - Map 7 loaded successfully.
+2026-11-14 17:43:28 - Now I'm in save_data()
+2026-11-14 17:43:28 - Data saved successfully: level = 8
+2026-11-14 17:43:28 - Map 8 loaded successfully.
+2026-11-14 17:43:43 - Now I'm in save_data()
+2026-11-14 17:43:43 - Data saved successfully: level = 9
+2026-11-14 17:43:43 - Map 9 loaded successfully.
+2026-11-14 17:44:05 - Now I'm in save_data()
+2026-11-14 17:44:05 - Data saved successfully: level = 10
+2026-11-14 17:44:05 - Map 10 loaded successfully.
+2026-11-14 17:44:24 - Now I'm in save_data()
+2026-11-14 17:44:24 - Data saved successfully: level = 11
+2026-11-14 17:44:24 - map11.pkl not found.
+2026-11-14 17:44:44 - Now I'm in save_data()
+2026-11-14 17:44:44 - Data saved successfully: level = 11
+2026-11-14 17:53:16 - Trying to get data from data.txt
+2026-11-14 17:53:16 - Now I'm in getin_data()
+2026-11-14 17:53:16 - Data retrieved successfully: level = 11.0
+2026-11-14 17:53:16 - Data retrieved successfully.
+2026-11-14 17:53:16 - Trying to open pygame window...
+2026-11-14 17:53:16 - Pygame window opened successfully.
+2026-11-14 17:53:17 - Game started.
+2026-11-14 17:53:17 - map11.pkl not found.
+2026-11-14 17:53:21 - Now I'm in save_data()
+2026-11-14 17:53:21 - Data saved successfully: level = 1
+2026-11-14 17:53:21 - Progress reset to level 1.
+2026-11-14 17:53:22 - Game started.
+2026-11-14 17:53:22 - Map 1 loaded successfully.
+2026-11-14 17:53:25 - Now I'm in save_data()
+2026-11-14 17:53:25 - Data saved successfully: level = 2
+2026-11-14 17:53:25 - Map 2 loaded successfully.
+2026-11-14 17:53:28 - Now I'm in save_data()
+2026-11-14 17:53:28 - Data saved successfully: level = 3
+2026-11-14 17:53:28 - Map 3 loaded successfully.
+2026-11-14 17:53:36 - Now I'm in save_data()
+2026-11-14 17:53:36 - Data saved successfully: level = 4
+2026-11-14 17:53:36 - Map 4 loaded successfully.
+2026-11-14 17:53:40 - Now I'm in save_data()
+2026-11-14 17:53:40 - Data saved successfully: level = 5
+2026-11-14 17:53:40 - Map 5 loaded successfully.
+2026-11-14 17:54:31 - Now I'm in save_data()
+2026-11-14 17:54:31 - Data saved successfully: level = 6
+2026-11-14 17:54:31 - Map 6 loaded successfully.
+2026-11-14 17:54:35 - Now I'm in save_data()
+2026-11-14 17:54:35 - Data saved successfully: level = 7
+2026-11-14 17:54:35 - Map 7 loaded successfully.
+2026-11-14 17:54:40 - Now I'm in save_data()
+2026-11-14 17:54:40 - Data saved successfully: level = 7
+2026-11-14 18:20:12 - Trying to get data from data.txt
+2026-11-14 18:20:12 - Now I'm in getin_data()
+2026-11-14 18:20:12 - Data retrieved successfully: level = 7.0
+2026-11-14 18:20:12 - Data retrieved successfully.
+2026-11-14 18:20:12 - Trying to open pygame window...
+2026-11-14 18:20:12 - Pygame window opened successfully.
+2026-11-14 18:20:15 - Now I'm in save_data()
+2026-11-14 18:20:15 - Data saved successfully: level = 1
+2026-11-14 18:20:15 - Progress reset to level 1.
+2026-11-14 18:20:18 - Game started.
+2026-11-14 18:20:18 - Map 1 loaded successfully.
+2026-11-14 18:20:21 - Now I'm in save_data()
+2026-11-14 18:20:21 - Data saved successfully: level = 2
+2026-11-14 18:20:21 - Map 2 loaded successfully.
+2026-11-14 18:20:29 - Now I'm in save_data()
+2026-11-14 18:20:29 - Data saved successfully: level = 3
+2026-11-14 18:20:29 - Map 3 loaded successfully.
+2026-11-14 18:20:34 - Now I'm in save_data()
+2026-11-14 18:20:34 - Data saved successfully: level = 4
+2026-11-14 18:20:34 - Map 4 loaded successfully.
+2026-11-14 18:20:47 - Now I'm in save_data()
+2026-11-14 18:20:47 - Data saved successfully: level = 5
+2026-11-14 18:20:48 - Map 5 loaded successfully.
+2026-11-14 18:21:07 - Now I'm in save_data()
+2026-11-14 18:21:07 - Data saved successfully: level = 5
+2026-11-14 18:44:29 - Trying to get data from data.txt
+2026-11-14 18:44:29 - Now I'm in getin_data()
+2026-11-14 18:44:29 - Data retrieved successfully: level = 5.0
+2026-11-14 18:44:29 - Data retrieved successfully.
+2026-11-14 18:44:29 - Trying to open pygame window...
+2026-11-14 18:44:29 - Pygame window opened successfully.
+2026-11-14 18:44:30 - Game started.
+2026-11-14 18:44:30 - Map 5 loaded successfully.
+2026-11-14 18:44:37 - Now I'm in save_data()
+2026-11-14 18:44:37 - Data saved successfully: level = 6.0
+2026-11-14 18:44:38 - Map 6 loaded successfully.
+2026-11-14 18:44:41 - Now I'm in save_data()
+2026-11-14 18:44:41 - Data saved successfully: level = 7.0
+2026-11-14 18:44:41 - Map 7 loaded successfully.
+2026-11-14 18:44:51 - Now I'm in save_data()
+2026-11-14 18:44:51 - Data saved successfully: level = 8.0
+2026-11-14 18:44:51 - Map 8 loaded successfully.
+2026-11-14 18:45:00 - Now I'm in save_data()
+2026-11-14 18:45:00 - Data saved successfully: level = 9.0
+2026-11-14 18:45:00 - Map 9 loaded successfully.
+2026-11-14 18:45:14 - Now I'm in save_data()
+2026-11-14 18:45:14 - Data saved successfully: level = 10.0
+2026-11-14 18:45:14 - Map 10 loaded successfully.
+2026-11-14 18:45:25 - Now I'm in save_data()
+2026-11-14 18:45:25 - Data saved successfully: level = 11.0
+2026-11-14 18:45:25 - map11.pkl not found.
+2026-11-14 18:45:29 - Now I'm in save_data()
+2026-11-14 18:45:29 - Data saved successfully: level = 11.0
+2026-11-14 18:46:12 - Trying to get data from data.txt
+2026-11-14 18:46:12 - Now I'm in getin_data()
+2026-11-14 18:46:12 - Data retrieved successfully: level = 11.0
+2026-11-14 18:46:12 - Data retrieved successfully.
+2026-11-14 18:46:12 - Trying to open pygame window...
+2026-11-14 18:46:12 - Pygame window opened successfully.
+2026-11-14 18:46:13 - Game started.
+2026-11-14 18:46:13 - map11.pkl not found.
+2026-11-14 18:46:17 - Now I'm in save_data()
+2026-11-14 18:46:17 - Data saved successfully: level = 1
+2026-11-14 18:46:17 - Progress reset to level 1.
+2026-11-14 18:46:19 - Now I'm in save_data()
+2026-11-14 18:46:19 - Data saved successfully: level = 1
